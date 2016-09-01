@@ -1,0 +1,2 @@
+compilare l'eseguibile: 
+mvn clean compile assembly:single
