@@ -1,0 +1,1 @@
+java -jar mhd.jar -s "C:/Users/fabio.fenoglio/workspace-neon/scadeweb/scadeweb-web/src/main/webapp" -z "" -l "trace"
