@@ -139,7 +139,6 @@ public class MagicHotDeployerEngine {
 		        
 		        Path filename = ev.context();
 
-		        // Verify that the new file is a text file.
 		        Path filePath;
 		        try {
 		        	filePath = dir.resolve(filename);

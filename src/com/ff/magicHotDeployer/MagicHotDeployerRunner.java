@@ -105,23 +105,22 @@ public class MagicHotDeployerRunner {
 		while (true) {
 			try {
 				Thread.sleep(250);
-				Boolean atLeastOneAlive = false;
-				
-				for (RunnableEngineInstance instance : instances) {
-					if (instance.isAlive()) {
-						atLeastOneAlive = true;
-						break;
-					}
-				}
-				
-				if (!atLeastOneAlive) {
-					Logger.info("no alive instances, exiting");
-					System.exit(1);
-				}
-				
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
+			}
+			
+			Boolean atLeastOneAlive = false;
+			
+			for (RunnableEngineInstance instance : instances) {
+				if (instance.isAlive()) {
+					atLeastOneAlive = true;
+					break;
+				}
+			}
+			
+			if (!atLeastOneAlive) {
+				Logger.info("no alive instances, exiting");
+				System.exit(1);
 			}
 		}
 	}
