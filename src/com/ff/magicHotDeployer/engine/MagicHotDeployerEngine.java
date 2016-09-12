@@ -33,6 +33,7 @@ public class MagicHotDeployerEngine {
     private Path targetFolder;
     private Boolean recursive;
     private String targetInnerPath = "";
+    private Long counter = 0L;
     
 	public MagicHotDeployerEngine(ConfigurationProvider cfg) {
 		this.cfg = cfg;
@@ -107,9 +108,7 @@ public class MagicHotDeployerEngine {
 		
 		while (true) {
 
-			// wait for key to be signalled
             WatchKey key;
-		    // wait for key to be signaled
 		    try {
 		        key = watcher.take();
 		    } catch (InterruptedException x) {
@@ -144,8 +143,9 @@ public class MagicHotDeployerEngine {
 		            continue;
 		        }
 
-		        Logger.debug(this.instanceName + "received event (" + kind.toString() + ") : " + filePath);
-		     
+		        Logger.debug(this.instanceName + "event #" + (this.counter) + " : " + kind.toString() + " " + filePath);
+		        this.counter ++;
+		        
 		        if (recursive && (kind == ENTRY_CREATE)) {
                     try {
                         if (Files.isDirectory(filePath, NOFOLLOW_LINKS)) {
@@ -169,7 +169,6 @@ public class MagicHotDeployerEngine {
             boolean valid = key.reset();
             if (!valid) {
                 keys.remove(key);
-
                 // all directories are inaccessible
                 if (keys.isEmpty()) {
                     break;
