@@ -165,7 +165,7 @@ public class JbossDeployer {
 		return targetPath;
 	}
 	
-	public static Path findDeploymentPath(String jbossHome, String matchPrefix) {
+	public static Path findDeploymentPath(String jbossHome, String matchPrefix) throws IOException {
 		
 		Logger.trace("running deployment path serch from " + jbossHome + ", matching " + matchPrefix);
 		
@@ -179,17 +179,22 @@ public class JbossDeployer {
 			}
 		});
 		
+		String picked = null;
+		
 		if (directories.length < 1) {
 			throw new RuntimeException("no base deployment directory found in " + path.toAbsolutePath().toString());
 		}
 		
 		if (directories.length > 1) {
-			throw new RuntimeException("cannot proceed : MULTIPLE DEPLOYMENT FOLDERS found in " + path.toAbsolutePath().toString());
+			picked = pickMostRecentDeploymentFolder(path, directories);
+		}
+		else {
+			picked = directories[0];
 		}
 		
 		Logger.trace("found first deployment dir: " + path);
 		
-		file = path.resolve(directories[0]).toFile();
+		file = path.resolve(picked).toFile();
 		directories = file.list(new FilenameFilter() {
 			@Override
 			public boolean accept(File current, String name) {
@@ -213,5 +218,35 @@ public class JbossDeployer {
 		}
 		
 		throw new RuntimeException("no deployed package found in " + file.getAbsolutePath());
+	}
+	
+	private static String pickMostRecentDeploymentFolder(Path path, String[] folders) throws IOException {
+		// throw new RuntimeException("cannot proceed : MULTIPLE DEPLOYMENT FOLDERS found in " + path.toAbsolutePath().toString());
+		
+		String mostRecent = null;
+		BasicFileAttributes mostRecentAttr = null;
+		
+		Logger.trace("running deployment folder picking procedure on creation time");
+		
+		for (String sub : folders) {
+			Path subPath = path.resolve(sub);
+			BasicFileAttributes attr = Files.readAttributes(subPath, BasicFileAttributes.class);
+			
+			Logger.trace("folder " + sub + " created at " + attr.creationTime().toString());
+			
+			if (mostRecent == null) {
+				mostRecent = sub;
+				mostRecentAttr = attr;
+				continue;
+			}
+			
+			if (attr.creationTime().compareTo(mostRecentAttr.creationTime()) > 0) {
+				mostRecentAttr = attr;
+				mostRecent = sub;
+			}
+		}
+		
+		Logger.trace("most recent is " + mostRecent);
+		return mostRecent;
 	}
 }

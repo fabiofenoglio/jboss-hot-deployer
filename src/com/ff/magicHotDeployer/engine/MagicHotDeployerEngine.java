@@ -80,10 +80,15 @@ public class MagicHotDeployerEngine {
         		targetFolder = Paths.get(URI.create("file:///" + cfg.getFixedTarget()));
         	}
         	else {
-        		targetFolder = JbossDeployer.findDeploymentPath(
-        			cfg.getJbossHome(), 
-        			cfg.getJbossDeployedPackagePrefix()
-    			);
+        		try {
+					targetFolder = JbossDeployer.findDeploymentPath(
+						cfg.getJbossHome(), 
+						cfg.getJbossDeployedPackagePrefix()
+					);
+				} catch (IOException e) {
+					Logger.error("error looking for deployment path", e);
+					throw new RuntimeException(e);
+				}
         	}
         	
         	Logger.debug(this.instanceName + "new deployment path is " + targetFolder.toAbsolutePath().toString());
