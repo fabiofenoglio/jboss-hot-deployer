@@ -38,13 +38,14 @@ public class MagicHotDeployerRunner {
 		Options options = ConfigurationProvider.buildCmdLineOptions();
         CommandLineParser parser = new DefaultParser();
         HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd;
+        CommandLine cmd = null;
         
         try {
             cmd = parser.parse(options, args);
         } catch (Exception e) {
             formatter.printHelp("magicHotDeployer", options);
-            throw new RuntimeException("Can't load command line arguments", e);
+            System.exit(0);
+            return;
         }
         
         String path = ConfigurationProvider.getConfigFilePath();
