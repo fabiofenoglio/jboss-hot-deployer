@@ -17,11 +17,13 @@ import java.nio.file.attribute.BasicFileAttributes;
 
 import org.apache.commons.io.FileUtils;
 
+import com.ff.magicHotDeployer.configuration.ConfigurationProvider;
 import com.ff.magicHotDeployer.logging.Logger;
 
 public class JbossDeployer {
 	
 	public static Boolean processEvent(
+		ConfigurationProvider cfg,
 		Path eventFilePath, 
 		WatchEvent.Kind<?> eventType, 
 		Path baseSourcePath, 
@@ -45,6 +47,13 @@ public class JbossDeployer {
 					eventFilePath.toFile().isDirectory()
 		);
 
+		if (!isFolder && cfg.getFilterPattern() != null) {
+			if (!cfg.getFilterPattern().matcher(eventFilePath.toAbsolutePath().toString()).find()) {
+				Logger.trace("file excluded by filter : " + eventFilePath.toAbsolutePath().toString());
+				return false;
+			}
+		}
+		
 		if (eventType == ENTRY_CREATE) {
 			if (isFolder) {
 				hotDeployNewFolder(eventFilePath.toFile(), targetPath.toFile());
@@ -172,6 +181,10 @@ public class JbossDeployer {
 		
 		if (directories.length < 1) {
 			throw new RuntimeException("no base deployment directory found in " + path.toAbsolutePath().toString());
+		}
+		
+		if (directories.length > 1) {
+			throw new RuntimeException("cannot proceed : MULTIPLE DEPLOYMENT FOLDERS found in " + path.toAbsolutePath().toString());
 		}
 		
 		Logger.trace("found first deployment dir: " + path);

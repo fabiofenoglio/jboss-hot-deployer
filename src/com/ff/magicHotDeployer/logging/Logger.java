@@ -80,17 +80,13 @@ public class Logger {
 	public static void error(String message) {
 		log(message, LEVEL_ERROR);
 	}
-	public static void error(String message, Object object) {
-		log(message, LEVEL_ERROR);
-		log(object.toString(), LEVEL_ERROR);
-	}
-	public static void error(Exception e) {
+	public static void error(Throwable e) {
 		log(e.getMessage(), LEVEL_ERROR);
 		if (getFilterLevel().getPriority() <= LEVEL_ERROR.getPriority()) {
 			e.printStackTrace();
 		}
 	}
-	public static void error(String message, Exception e) {
+	public static void error(String message, Throwable e) {
 		log(message, LEVEL_ERROR);
 		log(e.getMessage(), LEVEL_ERROR);
 		if (getFilterLevel().getPriority() <= LEVEL_ERROR.getPriority()) {
