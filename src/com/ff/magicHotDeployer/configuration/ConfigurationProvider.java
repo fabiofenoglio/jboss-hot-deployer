@@ -5,6 +5,9 @@ import java.util.prefs.Preferences;
 import java.util.regex.Pattern;
 
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.ini4j.InvalidFileFormatException;
@@ -46,6 +49,23 @@ public class ConfigurationProvider {
 		this.cmdLineOptions = cmdLineOptions;
 		this.cfgCache = node;
 		this.cfgCacheDefault = defaultNode;
+	}
+	
+	public static CommandLine parseCommandLine(String[] args) {
+		Options options = ConfigurationProvider.buildCmdLineOptions();
+        CommandLineParser parser = new DefaultParser();
+        HelpFormatter formatter = new HelpFormatter();
+        CommandLine cmd = null;
+        
+        try {
+            cmd = parser.parse(options, args);
+        } catch (Exception e) {
+            formatter.printHelp("magicHotDeployer", options);
+            System.exit(0);
+            return null;
+        }
+        
+        return cmd;
 	}
 	
 	public static String getCurrentPath() {
