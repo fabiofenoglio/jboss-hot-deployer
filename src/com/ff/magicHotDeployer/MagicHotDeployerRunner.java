@@ -34,7 +34,7 @@ public class MagicHotDeployerRunner {
 		}
 		
 		while (true) {
-			monitorEnginesPause();
+			monitorEnginesIdleCycle();
 			monitorEngines(instances);
 		}
 	}
@@ -55,7 +55,7 @@ public class MagicHotDeployerRunner {
 		}
 	}
 	
-	private static void monitorEnginesPause() {
+	private static void monitorEnginesIdleCycle() {
 		try {
 			Thread.sleep(250);
 		} catch (InterruptedException e) {

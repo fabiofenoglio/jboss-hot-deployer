@@ -97,16 +97,26 @@ public class MagicHotDeployerEngine {
         return targetFolder;
 	}
 	
+	private Boolean isInner(Path filePath, Path sourcePath) {
+		if (filePath.toAbsolutePath().startsWith(sourcePath.toAbsolutePath())) return true;
+		return false;
+	}
+	
 	public void run() throws IOException {
 		watcher = FileSystems.getDefault().newWatchService();
 	
 		Path sourcePath = Paths.get(URI.create("file:///" + cfg.getSourceFolder()));
 		
+		Path toRegister = sourcePath;
+		if (this.cfg.getWatchFrom() != null) {
+			toRegister = Paths.get(URI.create("file:///" + this.cfg.getWatchFrom()));
+		}
+		
 		if (recursive) {
-			registerAllFolders(sourcePath);
+			registerAllFolders(toRegister);
 		}
 		else {
-			registerFolder(sourcePath);
+			registerFolder(toRegister);
 		}
 		
 		Logger.debug(this.instanceName + "instance is UP and RUNNING");
@@ -147,6 +157,12 @@ public class MagicHotDeployerEngine {
 		            continue;
 		        }
 
+		        if (this.cfg.getWatchFrom() != null) {
+		        	if (!isInner(filePath, sourcePath)) {
+		        		Logger.trace(this.instanceName + "event skipped (not in watched dir) #" + (this.counter) + " : " + kind.toString() + " " + filePath);
+		        	}
+		        }
+		        
 		        Logger.debug(this.instanceName + "event #" + (this.counter) + " : " + kind.toString() + " " + filePath);
 		        this.counter ++;
 		        

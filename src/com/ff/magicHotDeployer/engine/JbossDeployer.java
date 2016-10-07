@@ -23,6 +23,43 @@ import com.ff.magicHotDeployer.logging.Logger;
 public class JbossDeployer {
 	
 	public static Boolean processEvent(
+			ConfigurationProvider cfg,
+			Path eventFilePath, 
+			WatchEvent.Kind<?> eventType, 
+			Path baseSourcePath, 
+			Path baseTargetFolder,
+			String targetInnerPath
+		) throws IOException
+	{
+		Integer attempt = 1;
+		
+		while (true) {
+			try {
+				trySingleProcessEvent(cfg, eventFilePath, eventType, baseSourcePath, baseTargetFolder, targetInnerPath);
+			}
+			catch (Exception e) {
+				Logger.debug("event process attempt #" + attempt + " failed");
+				Logger.error("event process attempt #" + attempt + " failed", e);
+				
+				if (attempt > cfg.getMaxRetries()) {
+					Logger.warn("max retries reached for event process. aborting");
+					throw e;
+				}
+				else {
+					attempt ++;
+					Logger.debug("retrying - attempt #" + attempt);
+					
+					try {
+						Thread.sleep(cfg.getRetryDelay());
+					} catch (InterruptedException e2) {
+						e2.printStackTrace();
+					}
+				}
+			}
+		}
+	}
+	
+	public static Boolean trySingleProcessEvent(
 		ConfigurationProvider cfg,
 		Path eventFilePath, 
 		WatchEvent.Kind<?> eventType, 

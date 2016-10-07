@@ -28,6 +28,12 @@ public class ConfigurationProvider {
 	public final static String PARAM_LOG_LEVEL = "logLevel";
 	public final static String PARAM_INSTANCE_NAME = "name";
 	public final static String PARAM_DEST_ABSOLUTE = "fixedTarget";
+	public final static String PARAM_WATCH_FROM = "watchFrom";
+	public final static String PARAM_MAX_RETRIES = "maxRetries";
+	public final static String PARAM_RETRY_DELAY = "retryDelay";
+	
+	public final static Integer DEFAULT_MAX_RETRIES = 3;
+	public final static Integer DEFAULT_RETRY_DELAY = 100;
 	
 	public static Integer instanceIndex = 0;
 	
@@ -44,35 +50,38 @@ public class ConfigurationProvider {
 	private String name = null;
 	private Pattern filterPattern;
 	private String fixedTarget = null;
-	
+	private String watchFrom = null;
+	private Integer maxRetries = null;
+	private Integer retryDelay = null;
+
+	public static String getCurrentPath() {
+		return System.getProperty("user.dir");
+	}
+	public static String getConfigFilePath() {
+		return getCurrentPath() + "/config.ini";
+	}
+
 	public ConfigurationProvider(CommandLine cmdLineOptions, Preferences node, Preferences defaultNode) {
 		this.cmdLineOptions = cmdLineOptions;
 		this.cfgCache = node;
 		this.cfgCacheDefault = defaultNode;
 	}
-	
+
 	public static CommandLine parseCommandLine(String[] args) {
 		Options options = ConfigurationProvider.buildCmdLineOptions();
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null;
         
         try {
+        	CommandLineParser parser = new DefaultParser();
             cmd = parser.parse(options, args);
         } catch (Exception e) {
+        	HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp("magicHotDeployer", options);
             System.exit(0);
             return null;
         }
         
         return cmd;
-	}
-	
-	public static String getCurrentPath() {
-		return System.getProperty("user.dir");
-	}
-	public static String getConfigFilePath() {
-		return getCurrentPath() + "/config.ini";
 	}
 	
 	private String readFromPrioritizedSource(String key) {
@@ -109,6 +118,27 @@ public class ConfigurationProvider {
 		
 		name = readFromPrioritizedSource(PARAM_INSTANCE_NAME);
 		if (name == null) name = "I" + (instanceIndex ++);
+		
+		watchFrom = readFromPrioritizedSource(PARAM_WATCH_FROM);
+		if (watchFrom != null && "".equals(watchFrom)) watchFrom = null;
+
+		String maxRetriesStr = readFromPrioritizedSource(PARAM_MAX_RETRIES);
+		if (maxRetriesStr != null && "".equals(maxRetriesStr)) maxRetriesStr = null;
+		if (maxRetriesStr == null) {
+			maxRetries = DEFAULT_MAX_RETRIES;
+		}
+		else {
+			maxRetries = Integer.valueOf(maxRetriesStr);
+		}
+
+		String retryDelayStr = readFromPrioritizedSource(PARAM_RETRY_DELAY);
+		if (retryDelayStr != null && "".equals(retryDelayStr)) retryDelayStr = null;
+		if (retryDelayStr == null) {
+			retryDelay = DEFAULT_RETRY_DELAY;
+		}
+		else {
+			retryDelay = Integer.valueOf(retryDelayStr);
+		}
 		
 		filter = readFromPrioritizedSource(PARAM_FILTER);
 		// filter can be null
@@ -182,10 +212,14 @@ public class ConfigurationProvider {
         Option a7 = new Option("f", PARAM_FILTER, true, "filter to apply to files");
         a7.setRequired(false);
         options.addOption(a7);
-        
+
         Option a8= new Option("w", PARAM_DEST_ABSOLUTE, true, "don't deploy to jboss but to this directory");
         a8.setRequired(false);
         options.addOption(a8);
+
+        Option a9= new Option("wf", PARAM_WATCH_FROM, true, "place watcher in this directory instead of the watched one");
+        a9.setRequired(false);
+        options.addOption(a9);
         
         return options;
 	}
@@ -260,6 +294,24 @@ public class ConfigurationProvider {
 
 	public void setJbossDeployedPackagePrefix(String jbossDeployedPackagePrefix) {
 		this.jbossDeployedPackagePrefix = jbossDeployedPackagePrefix;
+	}
+	public String getWatchFrom() {
+		return watchFrom;
+	}
+	public void setWatchFrom(String watchFrom) {
+		this.watchFrom = watchFrom;
+	}
+	public Integer getMaxRetries() {
+		return maxRetries;
+	}
+	public void setMaxRetries(Integer maxRetries) {
+		this.maxRetries = maxRetries;
+	}
+	public Integer getRetryDelay() {
+		return retryDelay;
+	}
+	public void setRetryDelay(Integer retryDelay) {
+		this.retryDelay = retryDelay;
 	}
 	
 }
