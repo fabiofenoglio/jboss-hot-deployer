@@ -14,6 +14,8 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.WatchEvent;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
 
@@ -32,17 +34,20 @@ public class JbossDeployer {
 		) throws IOException
 	{
 		Integer attempt = 1;
+		Boolean goOn = true;
 		
-		while (true) {
+		while (goOn) {
 			try {
 				trySingleProcessEvent(cfg, eventFilePath, eventType, baseSourcePath, baseTargetFolder, targetInnerPath);
+				goOn = false;
 			}
 			catch (Exception e) {
 				Logger.debug("event process attempt #" + attempt + " failed");
-				Logger.error("event process attempt #" + attempt + " failed", e);
+				Logger.warn("event process attempt #" + attempt + " failed", e);
 				
 				if (attempt > cfg.getMaxRetries()) {
 					Logger.warn("max retries reached for event process. aborting");
+					goOn = false;
 					throw e;
 				}
 				else {
@@ -57,6 +62,8 @@ public class JbossDeployer {
 				}
 			}
 		}
+		
+		return true;
 	}
 	
 	public static Boolean trySingleProcessEvent(
@@ -201,10 +208,21 @@ public class JbossDeployer {
 		
 		return targetPath;
 	}
-	
-	public static Path findDeploymentPath(String jbossHome, String matchPrefix) throws IOException {
+
+	public static Path findDeploymentPath(String jbossHome, String matchPrefix, ConfigurationProvider cfg) throws IOException {
 		
 		Logger.trace("running deployment path serch from " + jbossHome + ", matching " + matchPrefix);
+		
+		if (cfg.isJboss4()) {
+			return findDeploymentPathJboss4(jbossHome, matchPrefix, cfg);
+		}
+		else {
+			return findDeploymentPathJboss6Plus(jbossHome, matchPrefix, cfg);
+		}
+		
+	}
+
+	private static Path findDeploymentPathJboss6Plus(String jbossHome, String matchPrefix, ConfigurationProvider cfg) throws IOException {
 		
 		Path path = Paths.get(jbossHome, "tmp/vfs/deployment");
 		
@@ -256,10 +274,45 @@ public class JbossDeployer {
 		
 		throw new RuntimeException("no deployed package found in " + file.getAbsolutePath());
 	}
+
+	private static Path findDeploymentPathJboss4(String jbossHome, String matchPrefix, ConfigurationProvider cfg) throws IOException {
+		
+		Path path = Paths.get(jbossHome, "tmp/deploy");
+		
+		final String matchPrefixF = matchPrefix;
+		final Pattern p = Pattern.compile("tmp[0-9]+" + matchPrefixF);
+		
+		File file = new File(path.toAbsolutePath().toString());
+		String[] directories = file.list(new FilenameFilter() {
+			@Override
+			public boolean accept(File current, String name) {
+				Matcher m = p.matcher(name);
+				Boolean matches = m.find();
+				Logger.trace("matching " + name + " against {tmp[0-9]+" + matchPrefixF + "} : " + matches);
+				return new File(current, name).isDirectory() && name.startsWith("tmp") && matches;
+			}
+		});
+		
+		String picked = null;
+		
+		if (directories.length < 1) {
+			throw new RuntimeException("no base deployment directory found in " + path.toAbsolutePath().toString());
+		}
+		
+		if (directories.length > 1) {
+			picked = pickMostRecentDeploymentFolder(path, directories);
+		}
+		else {
+			picked = directories[0];
+		}
+		
+		Logger.trace("found deployment dir: " + path);
+		Path subPath = path.resolve(picked);
+		return subPath;
+	}
 	
 	private static String pickMostRecentDeploymentFolder(Path path, String[] folders) throws IOException {
-		// throw new RuntimeException("cannot proceed : MULTIPLE DEPLOYMENT FOLDERS found in " + path.toAbsolutePath().toString());
-		
+
 		String mostRecent = null;
 		BasicFileAttributes mostRecentAttr = null;
 		

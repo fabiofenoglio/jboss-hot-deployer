@@ -8,6 +8,7 @@ import com.ff.magicHotDeployer.configuration.ConfigurationProvider;
 import com.ff.magicHotDeployer.engine.EngineLoader;
 import com.ff.magicHotDeployer.engine.RunnableEngineInstance;
 import com.ff.magicHotDeployer.logging.Logger;
+import com.ff.magicHotDeployer.updater.UpdateChecker;
 
 public class MagicHotDeployerRunner {
 
@@ -23,6 +24,8 @@ public class MagicHotDeployerRunner {
 	private static void run(String[] args) throws IOException, BackingStoreException {
 		Logger.setFilterLevel(Logger.LEVEL_EVERY_SINGLE_SHIT);
 		Logger.info("starting");
+		
+		UpdateChecker.checkUpdates();
 		
         CommandLine cmd = ConfigurationProvider.parseCommandLine(args);
         List<RunnableEngineInstance> instances = EngineLoader.loadEngines(cmd);

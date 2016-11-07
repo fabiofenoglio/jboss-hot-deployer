@@ -1,10 +1,17 @@
 package com.ff.magicHotDeployer.logging;
 
+import java.util.concurrent.locks.ReentrantLock;
+
+import com.diogonunes.jcdp.color.ColoredPrinter;
+import com.diogonunes.jcdp.color.api.Ansi.Attribute;
+import com.diogonunes.jcdp.color.api.Ansi.BColor;
+import com.diogonunes.jcdp.color.api.Ansi.FColor;
+
 public class Logger {
 
 	public static LogLevel LEVEL_ERROR = new LogLevel(500, "ERROR", "red");
-	public static LogLevel LEVEL_WARNING = new LogLevel(200, "WARN", "orange");
-	public static LogLevel LEVEL_INFO = new LogLevel(100, "info", "#333377");
+	public static LogLevel LEVEL_WARNING = new LogLevel(200, " WARN", "orange");
+	public static LogLevel LEVEL_INFO = new LogLevel(100, " info", "#333377");
 	public static LogLevel LEVEL_DEBUG = new LogLevel(30, "debug", "#773333");
 	public static LogLevel LEVEL_TRACE = new LogLevel(10, "trace", "#555555");
 	
@@ -13,6 +20,14 @@ public class Logger {
 	
 	public static LogLevel filterLevel = LEVEL_DEBUG;
 
+	public static ReentrantLock lock = new ReentrantLock();
+	
+	public static ColoredPrinter printer = 
+			new ColoredPrinter.Builder(1, false)
+            .foreground(FColor.WHITE)
+            .background(BColor.BLACK)
+            .build();
+	
 	public static LogLevel getLevelFromCode(String code) {
 		switch (code) {
 			case "error": return LEVEL_ERROR;
@@ -28,9 +43,71 @@ public class Logger {
 	
 	public static void log(String message, LogLevel level) {
 		if (level.getPriority() >= getFilterLevel().getPriority()) {
+			
 			String line = message;
-			line = "[" + level.getName() + "] " + line;
-			System.out.println(line);
+			String pre = level.getName();
+		
+			Logger.lock.lock();
+			
+			if (level == LEVEL_DEBUG) {
+				printer.print(
+					"[" + pre + "]", 
+					Attribute.NONE, FColor.CYAN, BColor.BLACK
+				);
+				printer.println(
+					" " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.BLACK
+				);
+			}
+			else if (level == LEVEL_TRACE) {
+				printer.print(
+					"[" + pre + "]", 
+					Attribute.NONE, FColor.MAGENTA, BColor.BLACK
+				);
+				printer.println(
+					" " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.BLACK
+				);
+			}
+			else if (level == LEVEL_INFO) {
+				printer.print(
+					"[" + pre + "]", 
+					Attribute.NONE, FColor.WHITE, BColor.BLACK
+				);
+				printer.println(
+					" " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.BLACK
+				);
+			}
+			else if (level == LEVEL_ERROR) {
+				printer.print(
+					"[" + pre + "]", 
+					Attribute.NONE, FColor.WHITE, BColor.RED
+				);
+				printer.println(
+					" " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.RED
+				);
+			}
+			else if (level == LEVEL_WARNING) {
+				printer.print(
+					"[" + pre + "]", 
+					Attribute.NONE, FColor.WHITE, BColor.YELLOW
+				);
+				printer.println(
+					" " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.YELLOW
+				);
+			}
+			else {
+				printer.println(
+					"[" + pre + "] " + line, 
+					Attribute.NONE, FColor.WHITE, BColor.BLACK
+				);	
+			}
+			System.out.println("");
+			
+			Logger.lock.unlock();
 		}
 	}
 

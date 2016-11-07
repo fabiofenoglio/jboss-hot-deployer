@@ -32,6 +32,11 @@ public class ConfigurationProvider {
 	public final static String PARAM_MAX_RETRIES = "maxRetries";
 	public final static String PARAM_RETRY_DELAY = "retryDelay";
 	
+	// for jboss 4 support
+	public final static String PARAM_DEPLOY_MODE = "deployMode";
+	
+	public final static String PARAM_VAL_DEPLOY_MODE_JBOSS4 = "jboss4";
+	
 	public final static Integer DEFAULT_MAX_RETRIES = 3;
 	public final static Integer DEFAULT_RETRY_DELAY = 100;
 	
@@ -53,7 +58,8 @@ public class ConfigurationProvider {
 	private String watchFrom = null;
 	private Integer maxRetries = null;
 	private Integer retryDelay = null;
-
+	private String deployMode = null;
+	
 	public static String getCurrentPath() {
 		return System.getProperty("user.dir");
 	}
@@ -105,10 +111,8 @@ public class ConfigurationProvider {
 		if (sourceFolder == null) throw new RuntimeException("no sourceFolders in configuration");
 		
 		jbossHome = readFromPrioritizedSource(PARAM_JBOSS_HOME);
-		if (jbossHome == null) throw new RuntimeException("no jbossHome in configuration");
 
 		jbossDeployedPackagePrefix = readFromPrioritizedSource(PARAM_DEST_PACKAGE_PREFIX);
-		if (jbossDeployedPackagePrefix == null) throw new RuntimeException("no jbossDeployedPackagePrefix in configuration");
 
 		jbossDeployedSubpath = readFromPrioritizedSource(PARAM_DEST_SUB_FOLDER);
 		if (jbossDeployedSubpath == null) jbossDeployedSubpath = "";
@@ -145,6 +149,8 @@ public class ConfigurationProvider {
 		if (filter != null && !"".equals(filter)) {
 			filterPattern = Pattern.compile(filter);
 		}
+		
+		deployMode = readFromPrioritizedSource(PARAM_DEPLOY_MODE);
 		
 		String recursive = readFromPrioritizedSource(PARAM_RECURSIVE);
 		if (recursive != null) {
@@ -224,6 +230,16 @@ public class ConfigurationProvider {
         return options;
 	}
 	
+	public Boolean isJboss4() {
+		return (deployMode != null && deployMode.equals(PARAM_VAL_DEPLOY_MODE_JBOSS4));
+	}
+	
+	public String getDeployMode() {
+		return deployMode;
+	}
+	public void setDeployMode(String deployMode) {
+		this.deployMode = deployMode;
+	}
 	public String getFixedTarget() {
 		return fixedTarget;
 	}

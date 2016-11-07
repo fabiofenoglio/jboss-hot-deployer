@@ -71,6 +71,10 @@ public class MagicHotDeployerEngine {
         		Logger.debug(this.instanceName + "cached path is no longer available");
         		targetFolder = null;
         	}
+        	else if (cfg.isJboss4()) {
+        		Logger.debug("jboss4 mode : reevaluating deployment path at each event");
+        		targetFolder = null;
+        	}
         }
         
         if (targetFolder == null) {
@@ -83,7 +87,8 @@ public class MagicHotDeployerEngine {
         		try {
 					targetFolder = JbossDeployer.findDeploymentPath(
 						cfg.getJbossHome(), 
-						cfg.getJbossDeployedPackagePrefix()
+						cfg.getJbossDeployedPackagePrefix(),
+						cfg
 					);
 				} catch (IOException e) {
 					Logger.error("error looking for deployment path", e);
